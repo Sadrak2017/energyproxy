@@ -38,11 +38,15 @@ conectarAoBanco();
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/src/index.html');
 });
-// Rota para redirecionar para o index.html
+// Rota para redirecionar para o modulos.html
 app.get('/modulos', (req, res) => {
   res.sendFile(__dirname + '/pages/modulos.html');
 });
-// Rota para redirecionar para o index.html
+// Rota para redirecionar para o relatorios.html
+app.get('/relatorios', (req, res) => {
+  res.sendFile(__dirname + '/pages/relatorios.html');
+});
+// Rota para redirecionar para o parametros.html
 app.get('/param', (req, res) => {
   res.sendFile(__dirname + '/pages/parametros.html');
 });
@@ -53,6 +57,16 @@ app.get('/data/', async (req, res) => {
     res.json(rows);
   } catch (error) {
     console.error('Erro ao obter dados da tabela:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.get('/data/classificacao/', async (req, res) => {
+  try {
+    const rows = await getDataClassificao();
+    res.json(rows);
+  } catch (error) {
+    console.error('Erro ao obter dados da tabela de classificacao:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
@@ -99,6 +113,7 @@ app.get('/dataParam', async (req, res) => {
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
+
 app.post('/salvar-modulo', async (req, res) => {
   console.log(req.body )
   const { modelo, serie, data } = req.body;
@@ -114,6 +129,26 @@ app.post('/salvar-modulo', async (req, res) => {
   
     } catch (error) {
       console.error('Erro ao salvar módulo:', error);
+      res.status(500).send('Erro interno do servidor');
+    }
+  }
+});
+
+app.post('/salvar-carga', async (req, res) => {
+  console.log(req.body )
+  const { carga, potMin, potMax } = req.body;
+  if (await cargaJaExiste(carga, potMin, potMax)) {
+    res.status(400).send('Essa carga já existe.');
+  } else {
+    try {
+      const query = 'INSERT INTO classificacao (carga, potMax, potMin, consumo, statusCarga, dtInc) VALUES ($1, $2, $3, 0.00, 2, now())';
+      const values = [carga, potMin, potMax];
+
+      await pool.query(query, values);
+      res.redirect('/relatorios');
+  
+    } catch (error) {
+      console.error('Erro ao salvar carga:', error);
       res.status(500).send('Erro interno do servidor');
     }
   }
@@ -137,7 +172,6 @@ app.post('/salvar-parametro', async (req, res) => {
     console.error('Erro ao salvar parametro:', error);
     res.status(500).send('Erro interno do servidor');
   }
-  
 });
 
 async function parametroJaExiste() {
@@ -149,7 +183,6 @@ async function parametroJaExiste() {
     return true; // Considere como erro se não for possível realizar a verificação
   }
 }
-
 
 async function getDataParam() {
   try {
@@ -167,6 +200,16 @@ async function moduloJaExiste(modelo, serie) {
     return result.rows.length > 0;
   } catch (error) {
     console.error('Erro ao verificar se o módulo já existe:', error);
+    return true; // Considere como erro se não for possível realizar a verificação
+  }
+}
+
+async function cargaJaExiste(carga, potMin, potMax ) {
+  try {
+    const result = await pool.query('SELECT * FROM classificacao WHERE carga = $1 AND potMin = $2 AND potMax = $3', [carga, potMin, potMax]);
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Erro ao verificar se a carga já existe:', error);
     return true; // Considere como erro se não for possível realizar a verificação
   }
 }
@@ -193,86 +236,30 @@ async function getData() {
   }
 }
 
-async function getDataMetricas(modeloID) {
+async function getDataClassificao() {
   try {
-    const result = await pool.query(`
-        WITH valor as(
-          SELECT 
-            (SELECT
-              CAST(COALESCE(AVG(TENSAO), 0) * 
-            COALESCE(AVG(CORRENTE), 0) * 
-            COALESCE(VALORKWH, 0) * 
-            COALESCE(FATORCORRECAO, 0) *
-            EXTRACT(EPOCH FROM (MAX(dtInc) - MIN(dtInc))) / 3600 AS NUMERIC(17,2)) AS horas_dial
-          FROM consumo
-          WHERE to_char(dtInc, 'YYYY-mm-dd') = to_char(now(), 'YYYY-mm-dd') and IDMODULO = ${modeloID}
-          ) AS consumoDiario,
-          (SELECT
-              CAST(COALESCE(AVG(TENSAO), 0) * 
-            COALESCE(AVG(CORRENTE), 0) * 
-            COALESCE(VALORKWH, 0) * 
-            COALESCE(FATORCORRECAO, 0) * 
-            EXTRACT(EPOCH FROM (MAX(dtInc) - MIN(dtInc))) / 3600 AS NUMERIC(17,2)) AS horas_semanal
-          FROM consumo
-          WHERE to_char(dtInc, 'IYYY-IW') = to_char(now(), 'IYYY-IW') and IDMODULO = ${modeloID}
-            )  as consumoSemanal, 
-          (SELECT
-                CAST(COALESCE(AVG(TENSAO), 0) * 
-            COALESCE(AVG(CORRENTE), 0) * 
-            COALESCE(VALORKWH, 0) * 
-            COALESCE(FATORCORRECAO, 0) *
-            EXTRACT(EPOCH FROM (MAX(dtInc) - MIN(dtInc))) / 3600 AS NUMERIC(17,2)) AS horas_mensal
-          FROM consumo
-          WHERE to_char(dtInc, 'YYYY-MM') = to_char(now(), 'YYYY-MM') and IDMODULO = ${modeloID}
-          ) as consumoMensal,
-          (SELECT
-              CAST(COALESCE(AVG(TENSAO), 0) * 
-            COALESCE(AVG(CORRENTE), 0) *  
-            COALESCE(VALORKWH, 0) * 
-            COALESCE(FATORCORRECAO, 0) *
-            EXTRACT(EPOCH FROM (MAX(dtInc) - MIN(dtInc))) / 3600 AS NUMERIC(17,2)) AS horas_anual
-          FROM consumo
-          WHERE to_char(dtInc, 'YYYY') = to_char(now(), 'YYYY') and IDMODULO = ${modeloID}
-          ) as consumoAnual,
-          (SELECT
-            CAST(COALESCE(AVG(TENSAO), 0) * 
-           COALESCE(AVG(CORRENTE), 0) *  
-           COALESCE(VALORKWH, 0) * 
-           COALESCE(FATORCORRECAO, 0) *
-           EXTRACT(EPOCH FROM (MAX(dtInc) - MIN(dtInc))) / 3600 AS NUMERIC(17,2)) AS horas_anual
-         FROM consumo
-         WHERE IDMODULO = ${modeloID}
-         ) as consumototal
-        FROM PARAMETRO	
-        ) select 
-            coalesce(consumoDiario, 0.00) dia,
-            coalesce(consumoSemanal, 0.00) semana,
-            coalesce(consumoMensal, 0.00) mes,
-            coalesce(consumoAnual, 0.00) ano,
-            coalesce(consumototal, 0.00) total
-        from 
-            valor
-        `);
+    const result = await pool.query('SELECT * FROM classificacao ORDER BY dtInc DESC');
     return result.rows;
   } catch (error) {
-    console.error('Erro ao consultar métricas:', error);
+    console.error('Erro ao consultar classificações:', error);
+    return true; // Considere como erro se não for possível realizar a verificação
+  }
+}
+
+
+async function getDataMetricas(modeloID) {
+  try {
+    const result = await pool.query(`SELECT * FROM SP_CALCULA_VALOR_CONSUMO_PERIODO(${modeloID})`);
+    return result.rows;
+  } catch (error) {
+    console.error('Erro ao consultar métricas de consumo por hora:', error);
     return true; // Considere como erro se não for possível realizar a verificação
   }
 }
 
 async function getDataMetricasPotencia(modeloID) {
   try {
-    const result = await pool.query(`
-      SELECT
-        to_char(DATE_TRUNC('hour', dtInc), 'HH') horario,
-        cast(COALESCE(AVG(TENSAO), 0) * 
-        COALESCE(AVG(CORRENTE), 0)/1000 as numeric(17,2)) as potencia 
-      FROM CONSUMO 
-      WHERE 
-        to_char(dtInc, 'YYYY-mm-dd') = to_char(now(), 'YYYY-mm-dd') AND
-        IDMODULO = ${modeloID}
-      GROUP BY DATE_TRUNC('hour', dtInc)
-    `);
+    const result = await pool.query(`SELECT * FROM SP_CALCULA_CONSUMO(${modeloID})`);
     return result.rows;
   } catch (error) {
     console.error('Erro ao consultar métricas:', error);
@@ -283,19 +270,7 @@ async function getDataMetricasPotencia(modeloID) {
 
 async function getDataMetricasPotenciaDia(modeloID) {
   try {
-    const result = await pool.query(`
-      SELECT
-        to_char(DATE_TRUNC('hour', dtInc), 'HH') horario,
-        cast(COALESCE(AVG(TENSAO), 0) * 
-        COALESCE(AVG(CORRENTE), 0)/1000 as numeric(17,2)) as potencia 
-      FROM CONSUMO 
-      WHERE 
-        to_char(dtInc, 'YYYY-mm-dd') = to_char(now(), 'YYYY-mm-dd') AND
-        IDMODULO = ${modeloID}
-      GROUP BY DATE_TRUNC('hour', dtInc)
-      ORDER BY potencia
-      limit 3
-    `);
+    const result = await pool.query(`SELECT * FROM SP_CALCULA_CONSUMO_T3(${modeloID})`);
     return result.rows;
   } catch (error) {
     console.error('Erro ao consultar métricas:', error);

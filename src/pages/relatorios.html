@@ -8,6 +8,106 @@
   <!-- plugins:css -->
   <link rel="stylesheet" href="../assets/vendors/mdi/css/materialdesignicons.min.css">
   <link rel="stylesheet" href="../assets/vendors/css/vendor.bundle.base.css">
+  <!-- Adicione essas linhas no cabeçalho do seu HTML -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script>
+      function atualizaTabela(){
+        $.get('/data/classificacao', function(res) {
+          const data = res; // Obtém os dados JSON da resposta
+          
+          const tableBody = document.getElementById('table-body'); // Obtém o tbody da tabela
+
+          // Limpa qualquer conteúdo existente na tabela
+          tableBody.innerHTML = '';
+          const container = document.querySelector(".dropdown-menu");
+          container.innerHTML = '';
+          // Itera sobre os dados e cria uma linha (<tr>) para cada registro
+          data.forEach((item) => {
+            console.log(item)
+            const row = document.createElement('tr'); // Cria uma nova linha
+            // Cria células (<td>) para cada coluna
+            const IDCell = document.createElement('td');
+            IDCell.textContent = item.id;
+            // Cria células (<td>) para cada coluna
+            const cargaCell = document.createElement('td');
+            cargaCell.textContent = item.carga;
+
+            const potMinCell = document.createElement('td');
+            let min = Math.round(item.potmin * 100) / 100;
+            potMinCell.textContent = min.toFixed(2).replace('.', ',');
+
+            let max = Math.round(item.potmax * 100) / 100;
+            const potMaxCell = document.createElement('td');
+            potMaxCell.textContent = max.toFixed(2).replace('.', ',');
+            
+            let con = Math.round(item.consumo * 100) / 100;
+            const consumoCell = document.createElement('td');
+            consumoCell.textContent = con.toFixed(2).replace('.', ',');
+
+            const statusCargaCell = document.createElement('td');
+            statusCargaCell.innerHTML = item.statuscarga == 2 ? '<div class="badge badge-outline-warning">Desligado</div>' : '<div class="badge badge-outline-success">Ligado</div>';
+
+            const dataCell = document.createElement('td');
+            dataCell.textContent = item.dtinc; // Certifique-se de que o nome da coluna corresponda ao nome real
+
+            // Adiciona as células à linha
+            row.appendChild(IDCell);
+            row.appendChild(cargaCell);
+            row.appendChild(potMinCell);
+            row.appendChild(potMaxCell);
+            row.appendChild(consumoCell);
+            row.appendChild(statusCargaCell);
+            //row.appendChild(dataCell);
+          
+            // Adiciona a coluna de ações com o botão "Excluir"
+            const acoesCol = document.createElement('td');
+            const excluirBtn = document.createElement('button');
+            excluirBtn.textContent = 'Excluir';
+            excluirBtn.classList.add('btn', 'btn-danger');
+            excluirBtn.addEventListener('click', () => excluirCarga(item.id)); // Assuma que `modulo.id` contém o ID do módulo
+            acoesCol.appendChild(excluirBtn);
+            row.appendChild(acoesCol);
+
+            tableBody.appendChild(row);
+
+            // Seletor do container onde você deseja adicionar os módulos
+            const itemA = document.createElement("a");
+            itemA.classList.add("dropdown-item", "preview-item");
+            itemA.innerHTML = `
+              <div class="preview-thumbnail">
+                <div class="preview-icon bg-dark rounded-circle">
+                  <i class="mdi mdi-layers text-danger"></i>
+                </div>
+              </div>
+              <div class="preview-item-content">
+                <p class="preview-subject ellipsis mb-1">${item.modelo} ${item.serie}</p>
+              </div>
+            `;
+            container.appendChild(itemA);
+        });
+      });
+    }
+    atualizaTabela();
+    async function excluirCarga(id) {
+      if (confirm('Tem certeza que deseja excluir a carga com ID ' +id+' ?')) {
+        try {
+          const response = await fetch(`/excluir-carga/${id}`, { method: 'DELETE' });
+          
+          if (response.status === 200) {
+            atualizaTabela(); // Atualiza a tabela após a exclusão
+          } else {
+            alert('Erro ao excluir carga.');
+          }
+        } catch (error) {
+          console.error('Erro ao excluir carga:', error);
+        }
+      }
+    }
+  </script>
   <!-- endinject -->
   <!-- Plugin css for this page -->
   <!-- End plugin css for this page -->
@@ -24,7 +124,7 @@
   <nav class="sidebar sidebar-offcanvas" id="sidebar">
     <div class="sidebar-brand-wrapper d-none d-lg-flex align-items-center justify-content-center fixed-top">
       <a class="sidebar-brand brand-logo" href="../index.html"><img style="height: 24px" src="../assets/images/logo.png" alt="logo" /></a>
-      <a class="sidebar-brand brand-logo-mini" href="../index.html"><img src="../assets/images/logo-mini.png" alt="logo" /></a>
+      <a class="sidebar-brand brand-logo-mini" href="../index.html"><img src="../../assets/images/logo-mini.png" alt="logo" /></a>
     </div>
     <ul class="nav">
       <li class="nav-item profile">
@@ -39,6 +139,7 @@
               <span>-master</span>
             </div>
           </div>
+
         </div>
       </li>
       <li class="nav-item nav-category">
@@ -93,41 +194,7 @@
           <li class="nav-item dropdown d-none d-lg-block">
             <a class="nav-link btn btn-success create-new-button menu-arrow" id="createbuttonDropdown" data-bs-toggle="dropdown" aria-expanded="false" href="#"> Módulo AYR 122-234-757</a>
             <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="createbuttonDropdown">
-              <h6 class="p-3 mb-0">Módulos</h6>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item preview-item">
-                <div class="preview-thumbnail">
-                  <div class="preview-icon bg-dark rounded-circle">
-                    <i class="mdi mdi-layers text-danger"></i>
-                  </div>
-                </div>
-                <div class="preview-item-content">
-                  <p class="preview-subject ellipsis mb-1">AYR 122-234-757</p>
-                </div>
-              </a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item preview-item">
-                <div class="preview-thumbnail">
-                  <div class="preview-icon bg-dark rounded-circle">
-                    <i class="mdi mdi-layers text-danger"></i>
-                  </div>
-                </div>
-                <div class="preview-item-content">
-                  <p class="preview-subject ellipsis mb-1">AYR 122-364-563</p>
-                </div>
-              </a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item preview-item">
-                <div class="preview-thumbnail">
-                  <div class="preview-icon bg-dark rounded-circle">
-                    <i class="mdi mdi-layers text-danger"></i>
-                  </div>
-                </div>
-                <div class="preview-item-content">
-                  <p class="preview-subject ellipsis mb-1">AYR 474-374-564</p>
-                </div>
-              </a>
-              <div class="dropdown-divider"></div>
+  
             </div>
           </li>
           <li class="nav-item nav-settings d-none d-lg-block">
@@ -182,67 +249,84 @@
     <div class="main-panel">
       <div class="content-wrapper">
         <div class="page-header">
-          <h3 class="page-title"> Relatório </h3>
+          <h3 class="page-title"> Classificação das cargas </h3>
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-              <li class="breadcrumb-item"><a href="#">relatorio</a></li>
-              <li class="breadcrumb-item active" aria-current="page">Energy | proxy</li>
+              <li class="breadcrumb-item"><a href="#">Relatório</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Relatório</li>
             </ol>
           </nav>
         </div>
         <div class="row">
-          <div class="col-lg-6 grid-margin stretch-card">
+          <div class="col-lg-12 grid-margin stretch-card">
             <div class="card">
               <div class="card-body">
-                <h4 class="card-title">Taxa de consumo</h4>
-                <canvas id="lineChart" style="height:250px"></canvas>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-6 grid-margin stretch-card">
-            <div class="card">
-              <div class="card-body">
-                <h4 class="card-title">Potência consumida por dia</h4>
-                <canvas id="barChart" style="height:230px"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-lg-6 grid-margin stretch-card">
-            <div class="card">
-              <div class="card-body">
-                <h4 class="card-title">Valor em reais por dia</h4>
-                <canvas id="areaChart" style="height:250px"></canvas>
-              </div>
-            </div>
-          </div>
-          <div class="col-lg-6 grid-margin stretch-card">
-            <div class="card">
-              <div class="card-body">
-                <h4 class="card-title">Consumo por carga</h4>
-                <canvas id="doughnutChart" style="height:250px"></canvas>
+                <h4 class="card-title">--</h4>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCadastro">
+                  Gravar uma nova carga
+                </button>
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                    <tr>
+                      <th> ID </th>
+                      <th> Carga </th>
+                      <th> Potência mín. (kw) </th>
+                      <th> Potência máx. (kw) </th>
+                      <th> Consumo (kw) </th>
+                      <th> Status </th>
+                      <th> Ação </th>
+                    </tr>
+                    </thead>
+                    <tbody id="table-body">
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div class="row">
-          <div class="col-lg-6 grid-margin stretch-card">
-            <div class="card">
-              <div class="card-body">
-                <h4 class="card-title">Valores por mês</h4>
-                <canvas id="pieChart" style="height:250px"></canvas>
+        <div class="modal fade" id="modalCadastro">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <!-- Cabeçalho do Modal -->
+              <div class="modal-header">
+                <h4 class="modal-title">Cadastrar carga</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+              </div>
+        
+              <!-- Corpo do Modal -->
+              <div class="modal-body">
+                <!-- Adicione aqui os campos de cadastro -->
+                <form action="/salvar-carga" method="post">
+                  <div class="form-group">
+                    <label for="nome">Carga:</label>
+                    <input type="text" class="form-control" name="carga" id="carga">
+                  </div>
+                  <div class="form-group">
+                    <label for="nome">Potência mínima:</label>
+                    <input type="number" placeholder="0.00" required min="0" value="0" step="0.01" pattern="^\d+(?:\.\d{1,4})?$" onblur="
+                    this.parentNode.parentNode.style.backgroundColor=/^\d+(?:\.\d{1,4})?$/.test(this.value)?'inherit':'red'" class="form-control" name="potMin" id="potMin">
+                  </div>
+                  <div class="form-group">
+                    <label for="nome">Potência maxima:</label>
+                    <input type="number" placeholder="0.00" required min="0" value="0" step="0.01" pattern="^\d+(?:\.\d{1,4})?$" onblur="
+                    this.parentNode.parentNode.style.backgroundColor=/^\d+(?:\.\d{1,4})?$/.test(this.value)?'inherit':'red'" class="form-control" name="potMax" id="potMax">
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
-          <div class="col-lg-6 grid-margin stretch-card">
-            <div class="card">
-              <div class="card-body">
-                <h4 class="card-title">Ruídos</h4>
-                <canvas id="scatterChart" style="height:250px"></canvas>
-              </div>
-            </div>
-          </div>
+        </div>
+        <div id="alertaRegistroSalvo" class="alert alert-success alert-dismissible fade show" role="alert" style="display: none;">
+          Registro salvo com sucesso!
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
       </div>
       <!-- content-wrapper ends -->
@@ -261,6 +345,13 @@
 </div>
 <!-- container-scroller -->
 <!-- plugins:js -->
+<script>
+  // Verifica se o alerta deve ser exibido (por exemplo, se a URL inclui um parâmetro para indicar o sucesso)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('sucesso') && urlParams.get('sucesso') === 'true') {
+    document.getElementById('alertaRegistroSalvo').style.display = 'block';
+  }
+</script>
 <script src="../assets/vendors/js/vendor.bundle.base.js"></script>
 <!-- endinject -->
 <!-- Plugin js for this page -->
@@ -271,9 +362,6 @@
 <script src="../assets/js/misc.js"></script>
 <script src="../assets/js/settings.js"></script>
 <script src="../assets/js/todolist.js"></script>
-<!-- Custom js for this page -->
-<script src="../assets/js/chart.js"></script>
-<script src="../assets/vendors/chart.js/Chart.min.js"></script>
 <!-- endinject -->
 <!-- Custom js for this page -->
 <!-- End custom js for this page -->

@@ -61,15 +61,28 @@ app.get('/data/', async (req, res) => {
   }
 });
 
-app.get('/data/classificacao/', async (req, res) => {
+app.get('/data/classificacao/:modeloID', async (req, res) => {
   try {
-    const rows = await getDataClassificao();
+    const modeloID = req.params.modeloID;
+    const rows = await getDataClassificao(modeloID);
     res.json(rows);
   } catch (error) {
     console.error('Erro ao obter dados da tabela de classificacao:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
+
+app.get('/data/carga/cf/:modeloID', async (req, res) => {
+  try {
+    const modeloID = req.params.modeloID;
+    const rows = await getDataCargaAtual(modeloID);
+    res.json(rows);
+  } catch (error) {
+    console.error('Erro ao obter dados da tabela de classificacao:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 
 app.get('/data/metricas/:modeloID', async (req, res) => {
   try {
@@ -226,6 +239,18 @@ app.delete('/excluir-modulo/:id', async (req, res) => {
   }
 });
 
+app.delete('/excluir-carga/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query('DELETE FROM classificacao WHERE ID = $1', [id]);
+    res.status(200).send('Carga excluída com sucesso.');
+  } catch (error) {
+    console.error('Erro ao excluir carga:', error);
+    res.status(500).send('Erro interno do servidor.');
+  }
+});
+
 async function getData() {
   try {
     const result = await pool.query('SELECT * FROM modulo ORDER BY dtInc DESC');
@@ -236,9 +261,19 @@ async function getData() {
   }
 }
 
-async function getDataClassificao() {
+async function getDataCargaAtual(idModulo) {
   try {
-    const result = await pool.query('SELECT * FROM classificacao ORDER BY dtInc DESC');
+    const result = await pool.query('SELECT * FROM SP_DADOS_CARGA($1)', [idModulo]);
+    return result.rows;
+  } catch (error) {
+    console.error('Erro ao consultar dados da carga:', error);
+    return true; // Considere como erro se não for possível realizar a verificação
+  }
+}
+
+async function getDataClassificao(modeloID) {
+  try {
+    const result = await pool.query(`SELECT * FROM SP_CLASSIFICACAO_CARGA(${modeloID})`);
     return result.rows;
   } catch (error) {
     console.error('Erro ao consultar classificações:', error);

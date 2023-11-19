@@ -48,7 +48,7 @@ function atualizaMetricas(id){
     document.getElementById('moduloAnual').textContent = 'R$ '+ data[0].total;
     document.getElementById('dataAtual2').textContent = formatarData();
     if(res !== undefined && res != null && id !== 0)
-      setInterval(atualizaMetricas(id), 1000);
+      setInterval(atualizaMetricas(id), 10000);
   });
 }
 function formatarData() {

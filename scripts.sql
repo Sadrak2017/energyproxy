@@ -32,7 +32,9 @@ CREATE TABLE classificacao(
    potMin numeric(17,4) not null,
    consumo numeric(17,4) not null,
    statusCarga numeric(1) not null, --1 consumindo, 2 desativada
-   dtInc  timestamp not null
+   dtInc  timestamp not null,
+   potencia numeric(17,4) null, 
+   slot numeric(2) null
 );
 
 --Exemplo de insert na base 
@@ -41,8 +43,21 @@ insert into consumo values (
 	(select id from modulo where modelo = 'a320'), 
 	13, 
 	34, 
-	now()
+	now(),
+   180,
+   1
 )
 
 --
 ALTER TABLE CONSUMO ADD COLUMN potencia numeric(17,4) null
+ALTER TABLE CONSUMO ADD COLUMN SLOT numeric(2) null
+
+
+--INSERT INTO SLOTCONTROL VALUES((select COALESCE(max(id),0) +1 from SLOTCONTROL), 1, 1, NOW())
+--Controle de slot
+create table slotcontrol (
+   id SERIAL PRIMARY KEY, 	 
+   idSlot numeric(1),
+   status numeric(2),  -- 1 ligado , 2 desligado
+   dtinc  timestamp	
+)

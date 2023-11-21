@@ -51,7 +51,7 @@ insert into consumo values (
 --
 ALTER TABLE CONSUMO ADD COLUMN potencia numeric(17,4) null
 ALTER TABLE CONSUMO ADD COLUMN SLOT numeric(2) null
-
+ALTER TABLE slotcontrol ADD COLUMN dtcal timestamp null
 
 --INSERT INTO SLOTCONTROL VALUES((select COALESCE(max(id),0) +1 from SLOTCONTROL), 1, 1, NOW())
 --Controle de slot
@@ -59,5 +59,7 @@ create table slotcontrol (
    id SERIAL PRIMARY KEY, 	 
    idSlot numeric(1),
    status numeric(2),  -- 1 ligado , 2 desligado
-   dtinc  timestamp	
+   dtini  timestamp,	
+   dtini  timestamp,
+   dtcal  timestamp
 )

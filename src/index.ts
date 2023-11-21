@@ -155,7 +155,7 @@ app.post('/salvar-carga', async (req, res) => {
   } else {
     try {
       const query = 'INSERT INTO classificacao (carga, potMax, potMin, consumo, statusCarga, dtInc) VALUES ($1, $2, $3, 0.00, 2, now())';
-      const values = [carga, potMin, potMax];
+      const values = [carga, potMax, potMin];
 
       await pool.query(query, values);
       res.redirect('/relatorios');

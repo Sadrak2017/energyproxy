@@ -51,6 +51,7 @@
           const data = res; 
           document.getElementById('potMin').value = data[0].potmin;
           document.getElementById('potMax').value = data[0].potmax;
+          document.getElementById('cargalabel').innerHTML = data[0].slot !== null ? 'Carga conectada '+ data[0].slot : 'Nenhuma carga conectada';   
         })
       }
       function atualizaTabela(id){
@@ -76,17 +77,24 @@
             cargaCell.textContent = item.carga;
 
             const potMinCell = document.createElement('td');
-            let min = Math.round(item.potmin * 100) / 100;
-            potMinCell.textContent = min.toFixed(2).replace('.', ',');
+            let min = Math.round(item.potmin * 10000) / 10000;
+            potMinCell.textContent = min.toFixed(4).replace('.', ',');
 
-            let max = Math.round(item.potmax * 100) / 100;
+            let max = Math.round(item.potmax * 10000) / 10000;
             const potMaxCell = document.createElement('td');
-            potMaxCell.textContent = max.toFixed(2).replace('.', ',');
+            potMaxCell.textContent = max.toFixed(4).replace('.', ',');
             
-            let con = Math.round(item.consumo * 100) / 100;
+            let con = Math.round(item.consumo * 10000) / 10000;
             const consumoCell = document.createElement('td');
-            consumoCell.textContent = con.toFixed(2).replace('.', ',');
+            consumoCell.textContent = con.toFixed(4).replace('.', ',');
+            
+            let kwh = Math.round(item.kwh * 10000) /10000;
+            const kwhCell = document.createElement('td');
+            kwhCell.textContent = kwh.toFixed(4).replace('.', ',');
 
+            const slotCell = document.createElement('td');
+            slotCell.textContent = item.slot;
+   
             const statusCargaCell = document.createElement('td');
             statusCargaCell.innerHTML = item.statuscarga == 2 ? '<div class="badge badge-outline-warning">Desligado</div>' : '<div class="badge badge-outline-success">Ligado</div>';
 
@@ -98,7 +106,9 @@
             row.appendChild(cargaCell);
             row.appendChild(potMinCell);
             row.appendChild(potMaxCell);
+            row.appendChild(kwhCell); 
             row.appendChild(consumoCell);
+            row.appendChild(slotCell);
             row.appendChild(statusCargaCell);
            // row.appendChild(dataCell);
           
@@ -152,8 +162,8 @@
     function simularClique2() {
       document.getElementById('btnUpdateGravar').click();
     }
-    setInterval(simularClique2, 2000);
-    setInterval(simularClique, 2000);
+    setInterval(simularClique2, 1000);
+    setInterval(simularClique, 1000);
   </script>
   <!-- endinject -->
   <!-- Plugin css for this page -->
@@ -326,7 +336,9 @@
                       <th> Carga </th>
                       <th> Potência mín. (kw) </th>
                       <th> Potência máx. (kw) </th>
-                      <th> Valor kwh (R$) </th>
+                      <th> kwh </th>     
+                      <th> Valor (R$) </th>
+                      <th> Tomada </th>
                       <th> Status </th>
                       <th> Ação </th>
                     </tr>
@@ -353,7 +365,7 @@
                 <!-- Adicione aqui os campos de cadastro -->
                 <form action="/salvar-carga" method="post">
                   <div class="form-group">
-                    <label for="nome">Carga:</label>
+                    <label id="cargalabel" for="nome">Carga:</label>
                     <input type="text" class="form-control" name="carga" id="carga">
                   </div>
                   <div class="form-group">

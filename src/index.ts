@@ -17,9 +17,9 @@ app.use(express.static('src'));
 // Configurações de conexão com o banco de dados
 const pool = new Pool({
   user: 'postgres',
-  host: 'localhost',
+  host: 'energybd.cauhddqrjy4o.us-east-1.rds.amazonaws.com',
   database: 'oficina',
-  password: '1234',
+  password: 'theverve21',
   port: 5432, // Porta padrão do PostgreSQL
 });
 

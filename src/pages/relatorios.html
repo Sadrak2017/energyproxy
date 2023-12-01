@@ -8,171 +8,11 @@
   <!-- plugins:css -->
   <link rel="stylesheet" href="../assets/vendors/mdi/css/materialdesignicons.min.css">
   <link rel="stylesheet" href="../assets/vendors/css/vendor.bundle.base.css">
-  <!-- Adicione essas linhas no cabeçalho do seu HTML -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-  <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-  <script>
-      function atualizaComboList(desc, id){
-      $.get('/data', function(res) {
-        const data = res; // Obtém os dados JSON da resposta
-        const container = document.querySelector(".dropdown-menu");
-        const btnModulo = document.getElementById('createbuttonDropdown');
-        container.innerHTML = '';
-        if(desc !== 'Selecionar Módulo' && desc !== undefined){
-          btnModulo.textContent = desc;
-          document.querySelector('.src-energy').id = id;
-          atualizaTabela(id);
-        }
-        // Itera sobre os dados e cria uma linha (<tr>) para cada registro
-        data.forEach((item) => {
-          // Seletor do container onde você deseja adicionar os módulos
-          const itemA = document.createElement("a");
-          itemA.classList.add("dropdown-item", "preview-item");
-          itemA.innerHTML = `
-            <div class="preview-thumbnail">
-              <div class="preview-icon bg-dark rounded-circle">
-                <i class="mdi mdi-layers text-danger"></i>
-              </div>
-            </div>
-            <div class="preview-item-content">
-              <a onclick="atualizaComboList('${item.modelo} ${item.serie}', ${item.id})" class="preview-subject ellipsis mb-1">${item.modelo} ${item.serie}</a>
-            </div>
-          `;
-          container.appendChild(itemA);
-      });
-    });
-  }
-  atualizaComboList();
-     function buscaDadosCarga(id){
-        $.get('/data/carga/cf/'+id, function(res) {  
-          const data = res; 
-          document.getElementById('potMin').value = data[0].potmin;
-          document.getElementById('potMax').value = data[0].potmax;
-          document.getElementById('cargalabel').innerHTML = data[0].slot !== null ? 'Carga conectada '+ data[0].slot : 'Nenhuma carga conectada';   
-        })
-      }
-      function atualizaTabela(id){
-        if (id === undefined) return;
-        buscaDadosCarga(id);
-        $.get('/data/classificacao/'+id, function(res) {
-          const data = res; // Obtém os dados JSON da resposta
-          
-          const tableBody = document.getElementById('table-body'); // Obtém o tbody da tabela
-
-          // Limpa qualquer conteúdo existente na tabela
-          tableBody !== undefined ? tableBody.innerHTML = '': undefined;
-          const container = document.querySelector(".dropdown-menu");
-          container !== undefined ? container.innerHTML = '': undefined;
-          // Itera sobre os dados e cria uma linha (<tr>) para cada registro
-          data.forEach((item) => {
-            const row = document.createElement('tr'); // Cria uma nova linha
-            // Cria células (<td>) para cada coluna
-            const IDCell = document.createElement('td');
-            IDCell.textContent = item.id;
-            // Cria células (<td>) para cada coluna
-            const cargaCell = document.createElement('td');
-            cargaCell.textContent = item.carga;
-
-            const potMinCell = document.createElement('td');
-            let min = Math.round(item.potmin * 10000) / 10000;
-            potMinCell.textContent = min.toFixed(4).replace('.', ',');
-
-            let max = Math.round(item.potmax * 10000) / 10000;
-            const potMaxCell = document.createElement('td');
-            potMaxCell.textContent = max.toFixed(4).replace('.', ',');
-            
-            let con = Math.round(item.consumo * 10000) / 10000;
-            const consumoCell = document.createElement('td');
-            consumoCell.textContent = con.toFixed(4).replace('.', ',');
-            
-            let kwh = Math.round(item.kwh * 10000) /10000;
-            const kwhCell = document.createElement('td');
-            kwhCell.textContent = kwh.toFixed(4).replace('.', ',');
-
-            const slotCell = document.createElement('td');
-            slotCell.textContent = item.slot;
-   
-            const statusCargaCell = document.createElement('td');
-            statusCargaCell.innerHTML = item.statuscarga == 2 ? '<div class="badge badge-outline-warning">Desligado</div>' : '<div class="badge badge-outline-success">Ligado</div>';
-
-            const dataCell = document.createElement('td');
-            dataCell.textContent = item.dtinc; // Certifique-se de que o nome da coluna corresponda ao nome real
-
-            // Adiciona as células à linha
-            row.appendChild(IDCell);
-            row.appendChild(cargaCell);
-            row.appendChild(potMinCell);
-            row.appendChild(potMaxCell);
-            row.appendChild(kwhCell); 
-            row.appendChild(consumoCell);
-            row.appendChild(slotCell);
-            row.appendChild(statusCargaCell);
-           // row.appendChild(dataCell);
-          
-            // Adiciona a coluna de ações com o botão "Excluir"
-            const acoesCol = document.createElement('td');
-            const excluirBtn = document.createElement('button');
-            excluirBtn.textContent = 'Excluir';
-            excluirBtn.classList.add('btn', 'btn-danger');
-            excluirBtn.addEventListener('click', () => excluirCarga(item.id)); // Assuma que `modulo.id` contém o ID do módulo
-            acoesCol.appendChild(excluirBtn);
-            row.appendChild(acoesCol);
-
-            tableBody.appendChild(row);
-
-            // Seletor do container onde você deseja adicionar os módulos
-            const itemA = document.createElement("a");
-            itemA.classList.add("dropdown-item", "preview-item");
-            itemA.innerHTML = `
-              <div class="preview-thumbnail">
-                <div class="preview-icon bg-dark rounded-circle">
-                  <i class="mdi mdi-layers text-danger"></i>
-                </div>
-              </div>
-              <div class="preview-item-content">
-                <p class="preview-subject ellipsis mb-1">${item.modelo} ${item.serie}</p>
-              </div>
-            `;
-            container.appendChild(itemA);
-        });
-      });
-    }
-    atualizaTabela()
-    async function excluirCarga(id) {
-      if (confirm('Tem certeza que deseja excluir a carga com ID ' +id+' ?')) {
-        try {
-          const response = await fetch(`/excluir-carga/${id}`, { method: 'DELETE' });
-          
-          if (response.status === 200) {
-            atualizaTabela(); // Atualiza a tabela após a exclusão
-          } else {
-            alert('Erro ao excluir carga.');
-          }
-        } catch (error) {
-          console.error('Erro ao excluir carga:', error);
-        }
-      }
-    }
-    function simularClique() {
-      document.getElementById('btnUpdate').click();
-    }
-    function simularClique2() {
-      document.getElementById('btnUpdateGravar').click();
-    }
-    setInterval(simularClique2, 1000);
-    setInterval(simularClique, 1000);
-  </script>
-  <!-- endinject -->
-  <!-- Plugin css for this page -->
-  <!-- End plugin css for this page -->
-  <!-- inject:css -->
-  <!-- endinject -->
-  <!-- Layout styles -->
+  <link rel="stylesheet" href="../assets/vendors/jvectormap/jquery-jvectormap.css">
+  <link rel="stylesheet" href="../assets/vendors/flag-icon-css/css/flag-icon.min.css">
+  <link rel="stylesheet" href="../assets/vendors/owl-carousel-2/owl.carousel.min.css">
+  <link rel="stylesheet" href="../assets/vendors/owl-carousel-2/owl.theme.default.min.css">
   <link rel="stylesheet" href="../assets/css/style.css">
-  <!-- End layout styles -->
   <link rel="shortcut icon" href="../assets/images/favicon.png" />
 </head>
 <body>
@@ -207,7 +47,7 @@
               <span class="menu-icon">
                 <i class="mdi mdi-speedometer"></i>
               </span>
-          <span class="menu-title">Dashboard</span>
+          <span class="menu-title">Painel</span>
         </a>
       </li>
       <li class="nav-item menu-items">
@@ -249,9 +89,8 @@
         </button>
         <ul class="navbar-nav navbar-nav-right">
           <li class="nav-item dropdown d-none d-lg-block">
-            <a class="nav-link btn btn-success create-new-button menu-arrow" id="createbuttonDropdown" data-bs-toggle="dropdown" aria-expanded="false" href="#"> Selecionar Módulo</a>
-            <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="createbuttonDropdown">
-  
+            <a class="nav-link btn btn-success create-new-button menu-arrow " id="createbuttonDropdown2" data-bs-toggle="dropdown" aria-expanded="false" href="#">Selecionar Módulo</a>
+            <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" id="elements" createbuttonDropdown2">
             </div>
           </li>
           <li class="nav-item nav-settings d-none d-lg-block">
@@ -321,7 +160,7 @@
                 <h4 class="card-title">Lista de cargas</h4>
                 <div class="d-flex justify-content-between">
                   <button type="button" class="btn btn-primary" data-toggle="modal" id="gravarCarga" data-target="#modalCadastro">
-                      Gravar uma nova carga
+                      Gravar carga
                   </button>
                   <button type="button" id="btnUpdate" style="display: none;" class="btn btn-inverse-success btn-fw" onclick="atualizaTabela(document.querySelector('.src-energy').id)">
                   </button>
@@ -334,8 +173,8 @@
                     <tr>
                       <th> ID </th>
                       <th> Carga </th>
-                      <th> Potência mín. (kw) </th>
-                      <th> Potência máx. (kw) </th>
+                      <th> Pot. mín. (kw) </th>
+                      <th> Pot. máx. (kw) </th>
                       <th> kwh </th>     
                       <th> Valor (R$) </th>
                       <th> Tomada </th>
@@ -367,6 +206,7 @@
                   <div class="form-group">
                     <label id="cargalabel" for="nome">Carga:</label>
                     <input type="text" class="form-control" name="carga" id="carga">
+                    <input type="text" class="form-control" name="idModulo" style="display: none;" id="idModulo">
                   </div>
                   <div class="form-group">
                     <label for="nome">Potência mínima:</label>
@@ -417,16 +257,13 @@
     document.getElementById('alertaRegistroSalvo').style.display = 'block';
   }
 </script>
-<script src="../assets/vendors/js/vendor.bundle.base.js"></script>
 <!-- endinject -->
 <!-- Plugin js for this page -->
 <!-- End plugin js for this page -->
 <!-- inject:js -->
-<script src="../assets/js/off-canvas.js"></script>
-<script src="../assets/js/hoverable-collapse.js"></script>
-<script src="../assets/js/misc.js"></script>
-<script src="../assets/js/settings.js"></script>
-<script src="../assets/js/todolist.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="../assets/js/relatorios.js"></script>
 <!-- endinject -->
 <!-- Custom js for this page -->
 <!-- End custom js for this page -->

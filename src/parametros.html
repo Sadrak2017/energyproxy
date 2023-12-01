@@ -84,7 +84,7 @@
               <span class="menu-icon">
                 <i class="mdi mdi-speedometer"></i>
               </span>
-          <span class="menu-title">Dashboard</span>
+          <span class="menu-title">Painel</span>
         </a>
       </li>
       <li class="nav-item menu-items">
@@ -165,12 +165,9 @@
                 <h4 class="card-title">Cadastrar parâmetros de contabilidade de consumo</h4>
                 <form action="/salvar-parametro" method="post">
                   <p class="card-description"> Valor <code> KWH</code></p>
-                  <input type="number" placeholder="0.00" required min="0" value="0" step="0.01" pattern="^\d+(?:\.\d{1,4})?$" onblur="
-                  this.parentNode.parentNode.style.backgroundColor=/^\d+(?:\.\d{1,4})?$/.test(this.value)?'inherit':'red'" class="form-control" name="parametro" id="parametro">
-                  <p class="card-description"> Fator de potência</code></p>
-                  <input type="number" placeholder="0.00" required min="0" value="0" step="0.01" pattern="^\d+(?:\.\d{1,4})?$" onblur="
+                  <input type="number" placeholder="0.00" required  min="0" value="0" step="0.01" pattern="^\d+(?:\.\d{1,4})?$" onblur="
                   this.parentNode.parentNode.style.backgroundColor=/^\d+(?:\.\d{1,4})?$/.test(this.value)?'inherit':'red'
-                  " class="form-control" name="fator" id="fator">
+                  " type="text" pattern="^\d*(\.\d{0,4})?$" class="form-control" name="parametro" id="parametro">
                   <button type="submit" class="btn btn-primary">Salvar</button>
                 </form>
               </div>

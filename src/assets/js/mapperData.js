@@ -11,9 +11,11 @@ function atualizaTabela(desc, id){
       const container = document.querySelector(".dropdown-menu");
       const btnModulo = document.getElementById('createbuttonDropdown');
       container.innerHTML = '';
-      if(desc !== 'Selecionar Módulo' && desc !== undefined){
-        btnModulo.textContent = desc;''
+      if(desc !== 'Selecionar Módulo' && desc !== undefined && desc !== "" && desc !== null){
+        btnModulo.textContent = desc;
         document.getElementById('moduloAqui').textContent = desc;
+        localStorage.setItem('modeloID', id);
+        localStorage.setItem('modeloDesc', desc);
         atualizaMetricas(id);
         atualizaMetricasPotencia(id);
       
@@ -37,7 +39,7 @@ function atualizaTabela(desc, id){
     });
   });
 }
-atualizaTabela();
+atualizaTabela(localStorage.getItem('modeloDesc'), localStorage.getItem('modeloID'));
 function atualizaMetricas(id){
   $.get('/data/metricas/'+id, function(res) {
     const data = res; // Obtém os dados JSON da resposta

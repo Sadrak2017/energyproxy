@@ -54,6 +54,7 @@ ALTER TABLE CONSUMO ADD COLUMN SLOT numeric(2) null
 ALTER TABLE slotcontrol ADD COLUMN dtcal timestamp null
 ALTER TABLE classificacao ADD COLUMN kwh numeric(17,4) null
 ALTER TABLE classificacao ADD COLUMN slot numeric(2) null
+ALTER TABLE classificacao ADD COLUMN idModulo numeric(2) null
 
 --INSERT INTO SLOTCONTROL VALUES((select COALESCE(max(id),0) +1 from SLOTCONTROL), 1, 1, NOW())
 --Controle de slot
@@ -66,3 +67,8 @@ create table slotcontrol (
    dtcal  timestamp,
    kwh    numeric(17,4) 
 )
+
+-- LIMPEZA 
+DELETE FROM  slotcontrol
+DELETE FROM  classificacao
+DELETE FROM  CONSUMO

@@ -149,15 +149,16 @@ app.post('/salvar-modulo', async (req, res) => {
 
 app.post('/salvar-carga', async (req, res) => {
   console.log(req.body )
-  const { carga, potMin, potMax } = req.body;
-  if (await cargaJaExiste(carga, potMin, potMax)) {
+  const { carga, potMin, potMax, idModulo } = req.body;
+  if (await cargaJaExiste(carga, potMin, potMax, idModulo)) {
     res.status(400).send('Essa carga já existe.');
   } else {
     try {
-      const query = 'INSERT INTO classificacao (carga, potMax, potMin, consumo, statusCarga, dtInc) VALUES ($1, $2, $3, 0.00, 2, now())';
-      const values = [carga, potMax, potMin];
+      const query = 'INSERT INTO classificacao (carga, potMax, potMin, consumo, statusCarga, dtInc, idModulo) VALUES ($1, $2, $3, 0.00, 2, now(), $4)';
+      const values = [carga, potMax, potMin, idModulo];
 
       await pool.query(query, values);
+      
       res.redirect('/relatorios');
   
     } catch (error) {
@@ -170,13 +171,13 @@ app.post('/salvar-carga', async (req, res) => {
 app.post('/salvar-parametro', async (req, res) => {
   console.log(req.body )
   var query = '';
-  const { parametro, fator } = req.body;
+  const { parametro } = req.body;
   if (await parametroJaExiste()) {
     await pool.query('DELETE FROM parametro');
   }
   try {
-    query = 'INSERT INTO parametro (valorKWH, fatorCorrecao, dtInc) VALUES (cast($1 as numeric), cast($2 as numeric), now())';
-    const values = [parametro.replace(',', '.'), fator.replace(',', '.')];
+    query = 'INSERT INTO parametro (valorKWH, fatorCorrecao, dtInc) VALUES (cast($1 as numeric), 0, now())';
+    const values = [parametro.replace(',', '.')];
 
     await pool.query(query, values);
     res.redirect('/param');
@@ -217,9 +218,9 @@ async function moduloJaExiste(modelo, serie) {
   }
 }
 
-async function cargaJaExiste(carga, potMin, potMax ) {
+async function cargaJaExiste(carga, potMin, potMax, idModulo) {
   try {
-    const result = await pool.query('SELECT * FROM classificacao WHERE carga = $1 AND potMin = $2 AND potMax = $3', [carga, potMin, potMax]);
+    const result = await pool.query('SELECT * FROM classificacao WHERE carga = $1 AND potMin = $2 AND potMax = $3 AND idModulo = $4', [carga, potMin, potMax, idModulo]);
     return result.rows.length > 0;
   } catch (error) {
     console.error('Erro ao verificar se a carga já existe:', error);
